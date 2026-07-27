@@ -1,0 +1,30 @@
+name: go_channels
+description: >-
+  Go-style concurrency for Dart: typed channels, a faithful select over many
+  channel operations, and structured task scopes with cooperative cancellation.
+version: 1.0.0
+repository: https://github.com/Yusufihsangorgel/go_channels
+issue_tracker: https://github.com/Yusufihsangorgel/go_channels/issues
+
+topics:
+  - concurrency
+  - channels
+  - async
+  - isolates
+
+screenshots:
+  - description: >-
+      Throughput against buffer capacity: every buffered size lands within a
+      few percent of the others, about 10% above the unbuffered rendezvous.
+    path: doc/capacity-throughput.png
+  - description: >-
+      Unbuffered channels rendezvous, so send completes at the receive;
+      buffered channels let send return while the buffer has room.
+    path: doc/buffered-vs-unbuffered.png
+
+environment:
+  sdk: ^3.6.0
+
+dev_dependencies:
+  lints: ^6.0.0
+  test: ^1.25.6
