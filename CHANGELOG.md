@@ -1,3 +1,15 @@
+## 1.0.1
+
+- Fix the two README diagrams, which were broken on pub.dev. Both pointed at
+  `github.com/Yusufihsangorgel/channels` — the repository name the package was
+  developed under, before pub.dev rejected it as too close to `channel` and it
+  became `go_channels` (see 0.1.1). That repository does not exist, so
+  pub.dev's image proxy served a 404 for the buffered-versus-unbuffered diagram
+  and for the capacity chart, in the two places where they carry the
+  explanation. The `screenshots:` entries in the pubspec use archive-relative
+  paths and were never affected, which is why both images still appeared in the
+  thumbnail gallery while the README showed neither. Docs only; no code change.
+
 ## 1.0.0
 
 The API is stable. No behaviour changes; this freezes the surface after an
