@@ -46,8 +46,23 @@ if (!ok) print('channel closed');
 
 ## select
 
-`select` waits on several channel operations and runs exactly one, like Go's
-`select`. If more than one branch is ready, it picks one at random for fairness.
+`select` waits on several channel operations, runs exactly one — and withdraws
+the branches that lost. That second half is the whole point, and it is what you
+cannot write with `dart:async`.
+
+Race two receives the way Dart invites you to, and both of them pull a value out
+of their channel *before* `Future.any` ever looks. The loser's value is handed to
+a future nobody awaits, and it is gone:
+
+```dart
+// Silently loses a value. Both receives run; only one result is ever read.
+final first = await Future.any([a.receive(), b.receive()]);
+```
+
+Nothing throws, no test fails, and both producers see a *successful* send — so
+there is no signal anywhere that a value reached nobody. A caller cannot fix
+this either: Dart offers no way to cancel a pending `receive`, so the withdrawal
+has to happen inside the channel. That is what `select` does:
 
 ```dart
 final label = await select<String>((s) {
@@ -56,6 +71,31 @@ final label = await select<String>((s) {
   s.onTimeout(const Duration(seconds: 1), () => 'timed out');
 });
 ```
+
+`example/select_multiway.dart` measures both spellings back to back. One run,
+same winner both times, so the only thing that differs is whether the losing
+channel kept its value:
+
+```
+won: a=1  ->  a: empty, b: still holds 2      # select: the 2 is still there
+Future.any won: a=1  ->  a: empty, b: empty   # Future.any: the 2 is destroyed
+```
+
+The withdrawal also matters when *nothing* wins, which is the case a worker
+waiting on work-or-shutdown spends all day in. A `select` that times out parks a
+waiter on every channel it was watching and takes all of them back out again, so
+the loop stays flat; the `Future.any` spelling abandons two receivers per round
+and the channel holds them for as long as it lives. Five rounds of each, from the
+same example:
+
+```
+after 5 select rounds:     a.waiters=0, b.waiters=0
+after 5 Future.any rounds: c.waiters=5, d.waiters=5   # one per round, each
+```
+
+If more than one branch is ready at once, `select` picks one at random, matching
+Go's fairness, so a busy channel cannot starve a quiet one. Declaration order is
+not priority: the same run split 2000 ties 973 to 1027.
 
 Add `onDefault` to make the whole `select` non-blocking:
 
