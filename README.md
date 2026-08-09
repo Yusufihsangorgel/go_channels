@@ -25,7 +25,7 @@ value. Buffered channels hold up to `capacity` values before a `send` blocks.
 The whole distinction is *when `send` completes*, which is what decides whether
 the sender feels backpressure the instant the receiver stalls:
 
-![On the left, an unbuffered channel: send waits until receive takes the value, so send completes at the moment of receive — a rendezvous. On the right, a buffered channel with capacity 2: send(1) and send(2) return at once because the buffer has room, and send(3) waits only once the buffer is full.](https://raw.githubusercontent.com/Yusufihsangorgel/go_channels/main/doc/buffered-vs-unbuffered.png)
+![On the left, an unbuffered channel: send waits until receive takes the value. Send completes at the moment of receive, a rendezvous. On the right, a buffered channel with capacity 2: send(1) and send(2) return at once because the buffer has room, and send(3) waits only once the buffer is full.](https://raw.githubusercontent.com/Yusufihsangorgel/go_channels/main/doc/buffered-vs-unbuffered.png)
 
 ```dart
 final jobs = Channel<String>();              // unbuffered
@@ -46,9 +46,9 @@ if (!ok) print('channel closed');
 
 ## select
 
-`select` waits on several channel operations, runs exactly one — and withdraws
-the branches that lost. That second half is the whole point, and it is what you
-cannot write with `dart:async`.
+`select` waits on several channel operations and runs exactly one. It then
+withdraws the branches that lost. That second half is the whole point, and it is
+what you cannot write with `dart:async`.
 
 Race two receives the way Dart invites you to, and both of them pull a value out
 of their channel *before* `Future.any` ever looks. The loser's value is handed to
@@ -59,10 +59,10 @@ a future nobody awaits, and it is gone:
 final first = await Future.any([a.receive(), b.receive()]);
 ```
 
-Nothing throws, no test fails, and both producers see a *successful* send — so
-there is no signal anywhere that a value reached nobody. A caller cannot fix
-this either: Dart offers no way to cancel a pending `receive`, so the withdrawal
-has to happen inside the channel. That is what `select` does:
+Nothing throws, no test fails, and both producers see a *successful* send. No
+signal anywhere says that a value reached nobody. A caller cannot fix this
+either: Dart offers no way to cancel a pending `receive`, which leaves the
+withdrawal to the channel itself. That is what `select` does:
 
 ```dart
 final label = await select<String>((s) {
@@ -73,7 +73,7 @@ final label = await select<String>((s) {
 ```
 
 `example/select_multiway.dart` measures both spellings back to back. One run,
-same winner both times, so the only thing that differs is whether the losing
+same winner both times. The only thing that differs is whether the losing
 channel kept its value:
 
 ```
@@ -83,8 +83,8 @@ Future.any won: a=1  ->  a: empty, b: empty   # Future.any: the 2 is destroyed
 
 The withdrawal also matters when *nothing* wins, which is the case a worker
 waiting on work-or-shutdown spends all day in. A `select` that times out parks a
-waiter on every channel it was watching and takes all of them back out again, so
-the loop stays flat; the `Future.any` spelling abandons two receivers per round
+waiter on every channel it was watching and takes all of them back out again,
+leaving the loop flat; the `Future.any` spelling abandons two receivers per round
 and the channel holds them for as long as it lives. Five rounds of each, from the
 same example:
 
@@ -160,17 +160,17 @@ the unbuffered rendezvous:
 ![Bar chart of throughput in millions of values per second. Unbuffered rendezvous 2.32; capacity 1 gives 2.70; capacity 16 gives 2.55; capacity 256 gives 2.60; capacity 4096 gives 2.59; capacity 256 drained through select gives 2.90. Every buffered size is within a few percent of the others and about ten percent above the rendezvous.](https://raw.githubusercontent.com/Yusufihsangorgel/go_channels/main/doc/capacity-throughput.png)
 
 A waiting rendezvous does not block the isolate. With a `send` outstanding and
-no receiver in sight, a 1 ms periodic timer still fired 20 times in 20 ms, so
-there is no stalled thread for a buffer to buy back the way there would be with
-OS threads.
+no receiver in sight, a 1 ms periodic timer still fired 20 times in 20 ms. There
+is no stalled thread for a buffer to buy back the way there would be with OS
+threads.
 
 What capacity actually decides is **when a producer feels backpressure**:
 unbuffered, `send` waits for a receiver, so a slow consumer throttles the
 producer immediately; buffered, the producer runs ahead until the buffer fills.
 Pick it for that, not for throughput.
 
-Draining through `select` is not a slow path either — measured on the same
-channel it came out slightly *faster* than a direct `receive`, so a worker that
+Draining through `select` is not a slow path either. Measured on the same
+channel it came out slightly *faster* than a direct `receive`; a worker that
 waits on work-or-shutdown pays nothing for the extra branch.
 
 Numbers from `benchmark/capacity_benchmark.dart` on an Apple M-series core,
@@ -184,7 +184,7 @@ capability check, so the same channel and `select` code can run across threads.
 
 ## Status
 
-Stable at 1.0.0. The surface is small and follows Go's, so it is unlikely to
-need reshaping; every public type is `final`, which leaves room to add to the
+Stable at 1.0.0. The surface is small and follows Go's, which makes reshaping
+unlikely; every public type is `final`, which leaves room to add to the
 package (the shared-memory path above, for one) without breaking callers.
 Issues and feedback are welcome.
