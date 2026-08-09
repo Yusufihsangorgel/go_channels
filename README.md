@@ -16,6 +16,39 @@ await ch.send(1);
 print(await ch.receive()); // 1
 ```
 
+## Why this instead of what you already have
+
+**Instead of `Future.any`.** Racing two channel receives is what `dart:async`
+already offers, and it cannot withdraw the loser. `Future.any` attaches a
+callback to every future in the list and returns the first result
+(`future.dart:645-646`, Dart 3.11); the losing `b.receive()` stays registered.
+Send to `b` afterwards and that abandoned receive takes the value: `b.length`
+is `0` and nothing is awaiting what it took. A `select` withdraws instead. A
+send branch commits only when it wins the shared claim (`channel.dart:193`),
+and a branch that loses is removed from the queue by the closure
+`_addSelectSend` returns (`channel.dart:238`).
+
+**Instead of cross_channel.** Its receive branch withdraws correctly:
+`recvCancelable` hands back a `cancel()` that removes the pop waiter
+(`ops.dart:224`, `261`). Its send branch does not. `select.dart:479-482` passes
+`sender.send(value)` into `onFuture` as an argument, so the send runs before
+the race begins, and `send` pushes on its fast path with no `await` above it
+(`ops.dart:74`). On 0.12.0, a select whose timeout branch wins still leaves the
+value in the channel.
+
+## Reach for it when
+
+- You are porting a Go service and want `select` to keep its meaning, including
+  on the send side.
+- A producer must not commit a value when a timeout or cancellation branch wins
+  the race.
+- One task's failure should cancel its siblings without threading a `Completer`
+  through every call.
+
+Skip it if a single `Stream` and its `StreamSubscription` already model the
+problem. That is the smaller tool, it is built in, and most Dart code does not
+need a second concurrency vocabulary.
+
 ## Channels
 
 A `Channel<T>` passes values between asynchronous tasks. Unbuffered channels
