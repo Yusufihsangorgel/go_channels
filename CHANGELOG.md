@@ -1,3 +1,11 @@
+## 1.1.1
+
+- The README opens with a recording of the package running, rendered from a
+  real execution rather than drawn: the command is run, its exit code checked,
+  and the frames built from the bytes it printed. `tools/term-trailer.sh` in
+  the portfolio repository makes it, so it can be regenerated when the numbers
+  move.
+
 ## 1.1.0
 
 - The README now answers, in its first screen, why to reach for this rather

@@ -16,6 +16,9 @@ await ch.send(1);
 print(await ch.receive()); // 1
 ```
 
+![The multi-way select example running: several channels are read at once and
+the output shows which one won each turn](https://raw.githubusercontent.com/Yusufihsangorgel/go_channels/main/doc/demo.gif)
+
 ## Why this instead of what you already have
 
 **Instead of `Future.any`.** Racing two channel receives is what `dart:async`

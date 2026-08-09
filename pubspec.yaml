@@ -2,7 +2,7 @@ name: go_channels
 description: >-
   Go-style concurrency for Dart: typed channels, a faithful select over many
   channel operations, and structured task scopes with cooperative cancellation.
-version: 1.1.0
+version: 1.1.1
 repository: https://github.com/Yusufihsangorgel/go_channels
 issue_tracker: https://github.com/Yusufihsangorgel/go_channels/issues
 
