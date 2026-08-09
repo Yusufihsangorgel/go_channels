@@ -1,3 +1,10 @@
+## 1.0.3
+
+- `example/cancellation.dart` shows a `select` losing a race without leaking
+  the loser. That is the case the README makes against hand-rolled
+  `Completer` code, and nothing in the examples demonstrated it. Docs and
+  example only.
+
 ## 1.0.2
 
 No library code changed in this release. `lib/` is byte-identical to 1.0.1.
