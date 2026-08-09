@@ -1,3 +1,21 @@
+## 1.0.2
+
+No library code changed in this release. `lib/` is byte-identical to 1.0.1.
+
+- `example/select_multiway.dart` is new. It takes the question "why not
+  `Future.any` over two `receive()` calls" and answers it by running both
+  spellings side by side, four scenes on fresh channels each time. The
+  `Future.any` race drains both channels before it picks a winner: the losing
+  value goes to a future nobody awaits, both producers see a successful send,
+  and nothing throws. `select` runs one branch and withdraws the rest, and the
+  loser's value stays in its channel for the next receiver. When nobody is
+  ready and a deadline wins instead, five rounds of `select` leave zero waiters
+  parked while five rounds of the `Future.any` spelling leave five on each
+  channel. The tie scene runs 2,000 rounds with both branches ready; one run
+  split them 973 to 1027, and declaration order carries no priority.
+- The README's `select` section now leads with that comparison and quotes the
+  example's output, in place of a two-sentence nod to Go.
+
 ## 1.0.1
 
 - Fix the two README diagrams, which were broken on pub.dev. Both pointed at
