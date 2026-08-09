@@ -94,7 +94,7 @@ after 5 Future.any rounds: c.waiters=5, d.waiters=5   # one per round, each
 ```
 
 If more than one branch is ready at once, `select` picks one at random, matching
-Go's fairness, so a busy channel cannot starve a quiet one. Declaration order is
+Go's fairness. A busy channel cannot starve a quiet one. Declaration order is
 not priority: the same run split 2000 ties 973 to 1027.
 
 Add `onDefault` to make the whole `select` non-blocking:
@@ -144,6 +144,10 @@ await withTimeout(const Duration(seconds: 5), (token) async {
 });
 ```
 
+`example/cancellation.dart` counts the steps each task got done: a failing task
+cutting its siblings short, a deadline the second task never reads and outlives,
+and a worker parked in `select` waiting on work-or-shutdown.
+
 ## A note on parallelism
 
 `go_channels` coordinates asynchronous tasks on one isolate. It does not add
@@ -180,7 +184,8 @@ round-trip rate separately.
 Dart is landing shared-memory multithreading (`Isolate.runShared`, tracked in
 [dart-lang/sdk#56841](https://github.com/dart-lang/sdk/issues/56841)). As that
 stabilizes, `go_channels` will offer a shared-memory execution path behind a
-capability check, so the same channel and `select` code can run across threads.
+capability check, and the same channel and `select` code will run across
+threads unchanged.
 
 ## Status
 

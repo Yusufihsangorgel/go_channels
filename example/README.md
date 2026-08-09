@@ -1,7 +1,8 @@
 # go_channels examples
 
-Two runnable files: `go_channels_example.dart` builds a pipeline,
-`select_multiway.dart` isolates the one primitive `dart:async` has no answer for.
+Three runnable files: `go_channels_example.dart` builds a pipeline,
+`select_multiway.dart` isolates the one primitive `dart:async` has no answer for,
+and `cancellation.dart` measures what cancelling a task actually achieves.
 
 ## go_channels_example.dart — fan-out / fan-in
 
@@ -88,6 +89,54 @@ idle select -> deadline
 ties over 2000 rounds: a won 973, b won 1027
   order of declaration is not priority — do not encode it as such
 ```
+
+## cancellation.dart — a scope losing a task, and a deadline nobody watches
+
+Cancellation in Dart is cooperative because it has to be: nothing can kill a
+running future from outside, and a scope can only raise a flag and wait for its
+tasks to notice. `cancellation.dart` measures what that buys and where it stops.
+
+Three scenes:
+
+1. Three workers of six steps each, then the same scope again with worker 1
+   throwing on step 3. `withTaskScope` cancels the token, waits for every task
+   anyway, and rethrows the first error. The run where nobody fails is what
+   makes the shortened counts readable.
+2. Two tasks, each with a 25 ms deadline over 100 ms of work. The one calling
+   `throwIfCancelled` between chunks gives up three chunks in. The one that
+   never reads its token runs all ten chunks and returns a value, with no error
+   anywhere.
+3. A worker parked in `select`, waiting on work-or-shutdown. Every branch is a
+   channel operation and a token is not one of those, which the scene works
+   around by closing a channel when the token is cancelled. Polling
+   `isCancelled` is no help to a parked task, which runs no code.
+
+```
+dart run example/cancellation.dart
+```
+
+Output (the millisecond figures move a few ms between runs; the counts do not):
+
+```
+nobody fails:    steps completed [6, 6, 6]
+worker 1 throws: steps completed [4, 2, 3]
+  the scope rethrew: Bad state: worker 1 failed on step 3
+  worker 1 threw on step 3, which is why its count stops at 2
+  the other two ran to their next check and stopped there; neither reaches 6
+
+deadline 25 ms over 100 ms of work
+  checks the token: gave up after 3 chunks (39ms)
+    reason: TimeoutException after 0:00:00.025000: withTimeout elapsed
+  ignores it:       ran all 10 chunks (127ms)
+  the second one outlived its deadline and nothing complained
+
+after 3 jobs: worker parked in select, jobs.waiters=1, shutdown.waiters=1
+  worker handled 3 jobs, then left on: operator asked to stop
+  cancelling a scope token is not a failure; this scope returned normally
+```
+
+The counts in scene 1 are the point of it. A sibling does not stop the instant
+its token flips; it stops at its next check, and worker 0 had just passed one.
 
 For what buffer capacity does and does not buy on one isolate, and the cost of
 `select`, see the benchmark chart in the package README.
