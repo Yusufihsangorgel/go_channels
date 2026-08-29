@@ -63,7 +63,7 @@ class _SendWaiter<T> {
 final class Channel<T> {
   /// Creates a channel with the given buffer [capacity] (0 = unbuffered).
   Channel({this.capacity = 0})
-    : assert(capacity >= 0, 'capacity must be non-negative');
+      : assert(capacity >= 0, 'capacity must be non-negative');
 
   /// The buffer capacity. Zero means unbuffered (rendezvous).
   final int capacity;
