@@ -55,7 +55,8 @@ Future<Duration> _pump(Channel<int> ch, {bool viaSelect = false}) async {
   sw.stop();
   if (received != _n) {
     throw StateError(
-        'received $received of $_n — the cases are not comparable');
+      'received $received of $_n — the cases are not comparable',
+    );
   }
   return sw.elapsed;
 }
@@ -72,21 +73,26 @@ Future<void> main() async {
   for (final cap in [1, 16, 256, 4096]) {
     rows['buffered, capacity $cap'] = await _pump(Channel<int>(capacity: cap));
   }
-  rows['buffered 256, drained via select'] =
-      await _pump(Channel<int>(capacity: 256), viaSelect: true);
+  rows['buffered 256, drained via select'] = await _pump(
+    Channel<int>(capacity: 256),
+    viaSelect: true,
+  );
 
   print('$_n values through one channel, sender and receiver on one isolate\n');
   for (final e in rows.entries) {
     print(
-        '${e.key.padRight(34)} ${e.value.inMilliseconds.toString().padLeft(5)} ms   ${_rate(e.value)}');
+      '${e.key.padRight(34)} ${e.value.inMilliseconds.toString().padLeft(5)} ms   ${_rate(e.value)}',
+    );
   }
 
   final unbuf = rows['unbuffered (rendezvous)']!.inMicroseconds;
   final buf256 = rows['buffered, capacity 256']!.inMicroseconds;
   print(
-      '\nbuffering 256 is ${(unbuf / buf256).toStringAsFixed(1)}x the throughput of a rendezvous');
+    '\nbuffering 256 is ${(unbuf / buf256).toStringAsFixed(1)}x the throughput of a rendezvous',
+  );
   final plain = rows['buffered, capacity 256']!.inMicroseconds;
   final sel = rows['buffered 256, drained via select']!.inMicroseconds;
   print(
-      'select costs ${(sel / plain).toStringAsFixed(1)}x a plain receive on the same channel');
+    'select costs ${(sel / plain).toStringAsFixed(1)}x a plain receive on the same channel',
+  );
 }

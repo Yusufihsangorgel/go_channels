@@ -26,6 +26,8 @@ Future<void> main() async {
   stopwatch.stop();
 
   final perSecond = messages / stopwatch.elapsedMicroseconds * 1e6;
-  print('$messages round-trips in ${stopwatch.elapsedMilliseconds} ms '
-      '(${(perSecond / 1e6).toStringAsFixed(1)}M/sec)');
+  print(
+    '$messages round-trips in ${stopwatch.elapsedMilliseconds} ms '
+    '(${(perSecond / 1e6).toStringAsFixed(1)}M/sec)',
+  );
 }

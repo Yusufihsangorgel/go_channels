@@ -60,16 +60,18 @@ void main() {
       expect(siblingObservedCancel, isTrue);
     });
 
-    test('a task spawned but never awaited still propagates its failure',
-        () async {
-      await expectLater(
-        withTaskScope<String>((scope) async {
-          scope.spawn((_) => throw StateError('orphan'));
-          return 'body-returned';
-        }),
-        throwsA(isA<StateError>()),
-      );
-    });
+    test(
+      'a task spawned but never awaited still propagates its failure',
+      () async {
+        await expectLater(
+          withTaskScope<String>((scope) async {
+            scope.spawn((_) => throw StateError('orphan'));
+            return 'body-returned';
+          }),
+          throwsA(isA<StateError>()),
+        );
+      },
+    );
   });
 
   group('waitAll', () {
@@ -90,10 +92,7 @@ void main() {
 
     test('fails fast on the first error', () {
       expect(
-        waitAll<int>([
-          (_) async => 1,
-          (_) async => throw StateError('nope'),
-        ]),
+        waitAll<int>([(_) async => 1, (_) async => throw StateError('nope')]),
         throwsA(isA<StateError>()),
       );
     });
@@ -106,8 +105,9 @@ void main() {
     });
 
     test('cancels the token when the deadline passes', () async {
-      final v =
-          await withTimeout(const Duration(milliseconds: 10), (token) async {
+      final v = await withTimeout(const Duration(milliseconds: 10), (
+        token,
+      ) async {
         await token.whenCancelled;
         return token.isCancelled ? 'cancelled' : 'ran';
       });

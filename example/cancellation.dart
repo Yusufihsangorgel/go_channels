@@ -35,8 +35,10 @@ Future<void> _oneFailureStopsTheSiblings() async {
   print('worker 1 throws: steps completed ${failed.done}');
   print('  the scope rethrew: ${failed.error}');
   print('  worker 1 threw on step 3, which is why its count stops at 2');
-  print('  the other two ran to their next check and stopped there; '
-      'neither reaches $steps\n');
+  print(
+    '  the other two ran to their next check and stopped there; '
+    'neither reaches $steps\n',
+  );
 }
 
 /// Runs three workers under one scope. Worker 1 throws on [failOnStep] if a
@@ -117,8 +119,10 @@ Future<void> _aDeadlineOnlyStopsATaskThatLooks() async {
   });
   final ignoredMs = watch.elapsedMilliseconds;
 
-  print('deadline ${deadline.inMilliseconds} ms over '
-      '${chunks * chunk.inMilliseconds} ms of work');
+  print(
+    'deadline ${deadline.inMilliseconds} ms over '
+    '${chunks * chunk.inMilliseconds} ms of work',
+  );
   print('  checks the token: $checked (${checkedMs}ms)');
   print('    reason: $stopReason');
   print('  ignores it:       $ignored (${ignoredMs}ms)');
@@ -166,14 +170,20 @@ Future<void> _waitingOnWorkOrShutdown() async {
     // the worker loops back into `select`. Yield so the count below describes a
     // worker that is parked rather than one that is on its way there.
     await Future<void>.delayed(Duration.zero);
-    print('after 3 jobs: worker parked in select, jobs.waiters='
-        '${jobs.waiters}, shutdown.waiters=${shutdown.waiters}');
+    print(
+      'after 3 jobs: worker parked in select, jobs.waiters='
+      '${jobs.waiters}, shutdown.waiters=${shutdown.waiters}',
+    );
 
     scope.token.cancel('operator asked to stop');
     await worker;
-    print('  worker handled $handled jobs, then left on: '
-        '${scope.token.reason}');
-    print('  cancelling a scope token is not a failure; this scope '
-        'returned normally');
+    print(
+      '  worker handled $handled jobs, then left on: '
+      '${scope.token.reason}',
+    );
+    print(
+      '  cancelling a scope token is not a failure; this scope '
+      'returned normally',
+    );
   });
 }

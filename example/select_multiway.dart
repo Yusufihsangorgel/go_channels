@@ -102,8 +102,10 @@ Future<void> _whenNobodyIsReadyTheDeadlineWins() async {
     });
     if (i == 0) print('idle select -> $outcome');
   }
-  print('  after $rounds select rounds:     '
-      'a.waiters=${a.waiters}, b.waiters=${b.waiters}');
+  print(
+    '  after $rounds select rounds:     '
+    'a.waiters=${a.waiters}, b.waiters=${b.waiters}',
+  );
 
   // The same loop with dart:async alone. Nothing ever arrives, the delay wins
   // every round, and both abandoned receives stay parked in their queue.
@@ -116,8 +118,10 @@ Future<void> _whenNobodyIsReadyTheDeadlineWins() async {
       Future<String>.delayed(deadline, () => 'deadline'),
     ]);
   }
-  print('  after $rounds Future.any rounds: '
-      'c.waiters=${c.waiters}, d.waiters=${d.waiters}  <- one per round, each\n');
+  print(
+    '  after $rounds Future.any rounds: '
+    'c.waiters=${c.waiters}, d.waiters=${d.waiters}  <- one per round, each\n',
+  );
 }
 
 /// When several branches are ready at once, Go picks one at random rather than

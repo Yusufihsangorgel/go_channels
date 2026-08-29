@@ -104,24 +104,26 @@ void main() {
   });
 
   group('structured concurrency', () {
-    test('a failing task cancels its siblings and the error propagates',
-        () async {
-      var siblingSawCancellation = false;
-      await expectLater(
-        withTaskScope((scope) async {
-          scope.spawn((token) async {
-            await Future<void>.delayed(const Duration(milliseconds: 300));
-            siblingSawCancellation = token.isCancelled;
-          });
-          scope.spawn((_) async {
-            await Future<void>.delayed(const Duration(milliseconds: 20));
-            throw StateError('task failed');
-          });
-        }).timeout(const Duration(seconds: 2)),
-        throwsStateError,
-      );
-      expect(siblingSawCancellation, isTrue);
-    });
+    test(
+      'a failing task cancels its siblings and the error propagates',
+      () async {
+        var siblingSawCancellation = false;
+        await expectLater(
+          withTaskScope((scope) async {
+            scope.spawn((token) async {
+              await Future<void>.delayed(const Duration(milliseconds: 300));
+              siblingSawCancellation = token.isCancelled;
+            });
+            scope.spawn((_) async {
+              await Future<void>.delayed(const Duration(milliseconds: 20));
+              throw StateError('task failed');
+            });
+          }).timeout(const Duration(seconds: 2)),
+          throwsStateError,
+        );
+        expect(siblingSawCancellation, isTrue);
+      },
+    );
 
     test('withTimeout cancels the token it hands out', () async {
       var observedCancellation = false;

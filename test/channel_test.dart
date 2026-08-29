@@ -14,19 +14,21 @@ void main() {
       expect(await ch.receive(), 2);
     });
 
-    test('send blocks once the buffer is full, then unblocks on receive',
-        () async {
-      final ch = Channel<int>(capacity: 1);
-      await ch.send(1);
-      var sent = false;
-      final pending = ch.send(2).then((_) => sent = true);
-      await Future<void>.delayed(Duration.zero);
-      expect(sent, isFalse, reason: 'buffer full, send must block');
-      expect(await ch.receive(), 1);
-      await pending;
-      expect(sent, isTrue);
-      expect(await ch.receive(), 2);
-    });
+    test(
+      'send blocks once the buffer is full, then unblocks on receive',
+      () async {
+        final ch = Channel<int>(capacity: 1);
+        await ch.send(1);
+        var sent = false;
+        final pending = ch.send(2).then((_) => sent = true);
+        await Future<void>.delayed(Duration.zero);
+        expect(sent, isFalse, reason: 'buffer full, send must block');
+        expect(await ch.receive(), 1);
+        await pending;
+        expect(sent, isTrue);
+        expect(await ch.receive(), 2);
+      },
+    );
   });
 
   group('Channel (unbuffered)', () {
@@ -175,22 +177,24 @@ void main() {
       expect(result, 'closed');
     });
 
-    test('withdraws a losing branch waiter (no lingering blocked receiver)',
-        () async {
-      final a = Channel<int>();
-      final b = Channel<int>();
-      final pending = select<String>((s) {
-        s.onReceive(a, (v, ok) => 'a');
-        s.onReceive(b, (v, ok) => 'b');
-      });
-      expect(a.waiters, 1);
-      expect(b.waiters, 1);
-      await a.send(1); // a wins
-      expect(await pending, 'a');
-      await Future<void>.delayed(Duration.zero); // let whenComplete run
-      expect(a.waiters, 0);
-      expect(b.waiters, 0, reason: 'losing branch waiter must be withdrawn');
-    });
+    test(
+      'withdraws a losing branch waiter (no lingering blocked receiver)',
+      () async {
+        final a = Channel<int>();
+        final b = Channel<int>();
+        final pending = select<String>((s) {
+          s.onReceive(a, (v, ok) => 'a');
+          s.onReceive(b, (v, ok) => 'b');
+        });
+        expect(a.waiters, 1);
+        expect(b.waiters, 1);
+        await a.send(1); // a wins
+        expect(await pending, 'a');
+        await Future<void>.delayed(Duration.zero); // let whenComplete run
+        expect(a.waiters, 0);
+        expect(b.waiters, 0, reason: 'losing branch waiter must be withdrawn');
+      },
+    );
 
     test('a losing branch is withdrawn and can still be used after', () async {
       final a = Channel<int>();

@@ -63,7 +63,7 @@ class _SendWaiter<T> {
 final class Channel<T> {
   /// Creates a channel with the given buffer [capacity] (0 = unbuffered).
   Channel({this.capacity = 0})
-      : assert(capacity >= 0, 'capacity must be non-negative');
+    : assert(capacity >= 0, 'capacity must be non-negative');
 
   /// The buffer capacity. Zero means unbuffered (rendezvous).
   final int capacity;
@@ -89,12 +89,14 @@ final class Channel<T> {
   Future<void> send(T value) {
     if (_trySendNow(value)) return Future<void>.value();
     final completer = Completer<void>();
-    _sendQ.add(_SendWaiter<T>(
-      value,
-      _Claimer(),
-      completer.complete,
-      completer.completeError,
-    ));
+    _sendQ.add(
+      _SendWaiter<T>(
+        value,
+        _Claimer(),
+        completer.complete,
+        completer.completeError,
+      ),
+    );
     return completer.future;
   }
 
@@ -114,10 +116,9 @@ final class Channel<T> {
     if (has) return Future<(T?, bool)>.value((value, true));
     if (!open) return Future<(T?, bool)>.value((null, false));
     final completer = Completer<(T?, bool)>();
-    _recvQ.add(_RecvWaiter<T>(
-      _Claimer(),
-      (v, ok) => completer.complete((v, ok)),
-    ));
+    _recvQ.add(
+      _RecvWaiter<T>(_Claimer(), (v, ok) => completer.complete((v, ok))),
+    );
     return completer.future;
   }
 
@@ -274,8 +275,11 @@ class _ReceiveCase<R, T> implements _Case<R> {
   }
 
   @override
-  void Function() register(_Claimer claimer,
-      void Function(FutureOr<R> Function()) resolve, Completer<R> completer) {
+  void Function() register(
+    _Claimer claimer,
+    void Function(FutureOr<R> Function()) resolve,
+    Completer<R> completer,
+  ) {
     return channel._addSelectReceive(claimer, (value, ok) {
       resolve(() => handler(value, ok));
     });
@@ -298,10 +302,14 @@ class _SendCase<R, T> implements _Case<R> {
   }
 
   @override
-  void Function() register(_Claimer claimer,
-      void Function(FutureOr<R> Function()) resolve, Completer<R> completer) {
-    return channel._addSelectSend(value, claimer, () => resolve(handler),
-        (error) {
+  void Function() register(
+    _Claimer claimer,
+    void Function(FutureOr<R> Function()) resolve,
+    Completer<R> completer,
+  ) {
+    return channel._addSelectSend(value, claimer, () => resolve(handler), (
+      error,
+    ) {
       if (!completer.isCompleted) completer.completeError(error);
     });
   }
