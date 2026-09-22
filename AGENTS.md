@@ -36,7 +36,7 @@ The producer/worker pipeline is `example/go_channels_example.dart`: unbuffered c
 
 **`select` / `SelectCases`.** Exactly one branch runs. Losing branches are withdrawn from the channel queues (`Channel.waiters` returns to 0) and do not consume a value. `SelectCases.onSend` does not put the value in the channel unless that branch wins. If several branches are ready, one is chosen at random; declaration order is not priority. `SelectCases.onDefault` makes the call non-blocking. `SelectCases.onTimeout` runs only if no other branch becomes ready in time.
 
-**`withTaskScope` / `TaskScope.spawn` / `CancelToken`.** If the body or any spawned task fails, `TaskScope.token` is cancelled, every spawned task is awaited, then the first error is rethrown. Cancellation is cooperative: `CancelToken.isCancelled`, `throwIfCancelled` (throws `CancelledException`), `whenCancelled`. A child token is cancelled with its parent. `waitAll` is fail-fast fan-out. `withTimeout` cancels its token after `duration` and still waits for the task; ignoring the token is not a failure.
+**`withTaskScope` / `TaskScope.spawn` / `CancelToken`.** If the body or any spawned task fails, `TaskScope.token` is cancelled, every spawned task is awaited, then the first error is rethrown. Cancellation is cooperative: `CancelToken.isCancelled`, `throwIfCancelled` (throws `CancelledException`), `whenCancelled`. A child token is cancelled with its parent. Calling `CancelToken.cancel` does not by itself fail the scope; a task that reacts with `throwIfCancelled` throws `CancelledException`, and that does. `waitAll` is fail-fast fan-out. `withTimeout` cancels its token after `duration` and still waits for the task; ignoring the token is not a failure.
 
 ## Mistakes
 
