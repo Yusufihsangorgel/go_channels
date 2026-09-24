@@ -7,10 +7,11 @@ repository: https://github.com/Yusufihsangorgel/go_channels
 issue_tracker: https://github.com/Yusufihsangorgel/go_channels/issues
 
 topics:
-  - concurrency
-  - channels
-  - async
-  - isolates
+  - go-channels
+  - typed-channels
+  - channel-select
+  - structured-concurrency
+  - cooperative-cancellation
 
 screenshots:
   - description: >-
