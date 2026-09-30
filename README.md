@@ -46,9 +46,19 @@ timeout branch wins, the value you offered on the send branch stays with you.
 - One task's failure should cancel its siblings without threading a `Completer`
   through every call.
 
-Skip it if a single `Stream` and its `StreamSubscription` already model the
-problem. That is the smaller tool, it is built in, and most Dart code does not
-need a second concurrency vocabulary.
+### Against Stream and StreamQueue
+
+`Stream` is built in, and `StreamQueue` from
+[`package:async`](https://pub.dev/packages/async) adds pull-style `next`,
+`take` and `skip` on top of it. Most Dart code should start there. This table
+covers the cases where the choice is close.
+
+| Your situation | Better fit |
+| --- | --- |
+| The values already arrive as a `Stream` and you read them with `listen`, `await for` or `StreamQueue.next`. | `Stream` and `StreamQueue`. It is the idiomatic Dart choice, and this package adds nothing for that case. |
+| You need to look ahead or read a fixed count, with `peek`, `lookAhead`, `take`, `skip` or `rest`. | `StreamQueue`. A `Channel` has no peek or take-n. |
+| You are porting Go code that uses `select` with a send branch, a timeout and a default. | `go_channels`. `select` has `onReceive`, `onSend`, `onTimeout` and `onDefault`, and picks one ready branch at random. `StreamQueue` has no send side. |
+| You race several receives and the losing ones must not take a value. | `go_channels`, where every losing branch is withdrawn with no extra code. With `Future.any([qa.next, qb.next])` the losing `next` stays pending and takes the next event of its queue (checked against `async` 2.13.1). `StreamQueue.cancelable` can withdraw it, and you wrap and cancel each loser yourself. |
 
 ## Channels
 

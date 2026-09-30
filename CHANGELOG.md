@@ -7,6 +7,8 @@
 - The README no longer quotes a timer measurement that the repository does not
   reproduce.
 - Line references to `channel.dart` in the README point at the right lines.
+- The README has a short table on when `Stream` and `StreamQueue` fit better
+  and when a `select` fits better.
 
 ## 1.1.1
 
