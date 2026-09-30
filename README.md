@@ -27,17 +27,15 @@ callback to every future in the list and returns the first result
 (`future.dart:645-646`, Dart 3.11); the losing `b.receive()` stays registered.
 Send to `b` afterwards and that abandoned receive takes the value: `b.length`
 is `0` and nothing is awaiting what it took. A `select` withdraws instead. A
-send branch commits only when it wins the shared claim (`channel.dart:193`),
+send branch commits only when it wins the shared claim (`channel.dart:194`),
 and a branch that loses is removed from the queue by the closure
-`_addSelectSend` returns (`channel.dart:238`).
+`_addSelectSend` returns (`channel.dart:239`).
 
-**Instead of cross_channel.** Its receive branch withdraws correctly:
-`recvCancelable` hands back a `cancel()` that removes the pop waiter
-(`ops.dart:224`, `261`). Its send branch does not. `select.dart:479-482` passes
-`sender.send(value)` into `onFuture` as an argument, so the send runs before
-the race begins, and `send` pushes on its fast path with no `await` above it
-(`ops.dart:74`). On 0.12.0, a select whose timeout branch wins still leaves the
-value in the channel.
+**Losing send branches.** A `select` here withdraws losing receive and send
+branches alike. A receive branch that loses is removed from the queue by the
+closure `_addSelectReceive` returns (`channel.dart:228`), and a send branch that
+loses is removed by the one `_addSelectSend` returns (`channel.dart:239`). If a
+timeout branch wins, the value you offered on the send branch stays with you.
 
 ## Reach for it when
 
@@ -170,7 +168,10 @@ final pages = await waitAll([
 
 Dart futures cannot be forcibly killed, so cancellation is cooperative: a task
 observes its `CancelToken` and stops itself. Check `isCancelled`, call
-`throwIfCancelled`, or await `whenCancelled` inside a `select`.
+`throwIfCancelled`, or await `whenCancelled`. A `select` cannot wait on a token,
+because every branch is a channel operation. To wake a parked `select`, close a
+shutdown channel when the token is cancelled and add an `onReceive` branch for
+that channel.
 
 ```dart
 await withTimeout(const Duration(seconds: 5), (token) async {
@@ -199,10 +200,9 @@ the unbuffered rendezvous:
 
 ![Bar chart of throughput in millions of values per second. Unbuffered rendezvous 2.32; capacity 1 gives 2.70; capacity 16 gives 2.55; capacity 256 gives 2.60; capacity 4096 gives 2.59; capacity 256 drained through select gives 2.90. Every buffered size is within a few percent of the others and about ten percent above the rendezvous.](https://raw.githubusercontent.com/Yusufihsangorgel/go_channels/main/doc/capacity-throughput.png)
 
-A waiting rendezvous does not block the isolate. With a `send` outstanding and
-no receiver in sight, a 1 ms periodic timer still fired 20 times in 20 ms. There
-is no stalled thread for a buffer to buy back the way there would be with OS
-threads.
+A waiting rendezvous does not block the isolate. A `send` with no receiver in
+sight is a pending future, and other tasks and timers keep running. There is no
+stalled thread for a buffer to buy back, as there would be with OS threads.
 
 What capacity actually decides is **when a producer feels backpressure**:
 unbuffered, `send` waits for a receiver, so a slow consumer throttles the

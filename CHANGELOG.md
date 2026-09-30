@@ -1,3 +1,13 @@
+## 1.1.2
+
+- The README no longer says a `select` can await `whenCancelled`. It now says
+  a token is not a channel operation and shows how to wake a parked `select`.
+- The README comparison with another package is replaced by what this package
+  does with losing receive and send branches.
+- The README no longer quotes a timer measurement that the repository does not
+  reproduce.
+- Line references to `channel.dart` in the README point at the right lines.
+
 ## 1.1.1
 
 - The README opens with a recording of the package running, rendered from a
